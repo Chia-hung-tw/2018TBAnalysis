@@ -325,16 +325,16 @@ void makePlots::NtupleMaker(){
   double E_37[NLAYER];
 
 
+  outT3->Branch("totalE",&totalE,"totalE/D");
+  outT3->Branch("totalE_CEE",&totalE_CEE,"totalE_CEE/D");
+  outT3->Branch("totalE_CEH",&totalE_CEH,"totalE_CEH/D");
   outT3->Branch("hit_mip","std::vector< std::vector<double> >",&hit_tmp);
   outT3->Branch("hit_x","std::vector< std::vector<double> >",&hit_x);
   outT3->Branch("hit_y","std::vector< std::vector<double> >",&hit_y);
   outT3->Branch("hit_z","std::vector< std::vector<double> >",&hit_z);
-  outT3->Branch("layerNhit",layerNhit,"layerNhit[40]/I");
-  outT3->Branch("totalE",&totalE,"totalE/D");
-  outT3->Branch("totalE_CEE",&totalE_CEE,"totalE_CEE/D");
-  outT3->Branch("totalE_CEH",&totalE_CEH,"totalE_CEH/D");
 
   outT3->Branch("NLAYER",&NLAYER,"NLAYER/I");
+  outT3->Branch("layerNhit",layerNhit,"layerNhit[NLAYER]/I");
   outT3->Branch("layerE",layerE,"layerE[NLAYER]/D");
   outT3->Branch("layerE1",E_1,"layerE1[NLAYER]/D");
   outT3->Branch("layerE7",E_7,"layerE7[NLAYER]/D");
