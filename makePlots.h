@@ -16,8 +16,7 @@
 #include <vector>
 
 using namespace std;
-const int NLAYER = 28+12;
-const int setup_config = 0; //0 For 28EE+ 12FH(7module*9layer + 1module*3layer)
+
 const double ENEPERMIP = 86.5e-06; //(GeV) Based on 150GeV muon for 300um Si
 
 class makePlots{
@@ -53,6 +52,18 @@ class makePlots{
   TTree        *T_MC;
   int          nevents;
   bool         TestRun;
+  int          NLAYER;
+  int          NLAYER_EE;
+  int          NLAYER_FH;
+  int          setup_config;
+  //********************* SETUP_CONFIG *****************************
+  //0 For 28EE(+4*1cm Fe)+ 12FH(7module*9layer + 1module*3layer)  **
+  //1 For 28EE+ 11FH(1*2 + 7module*9layer)                        **
+  //  (only air between last EE and first 7 module  FH)           **
+  //2 For 0EE + 9FH (7module*9layer, not sure about the absorber) **
+  //3 For 8EE(+4*1cm Fe) + 12FH(7module*12layer)                  **
+  // New EE setup on http://cmsonline.cern.ch/cms-elog/1069915    **
+  //****************************************************************
   
   // Mainframe functions
   void Init();
@@ -63,6 +74,7 @@ class makePlots{
   void InitTH2Poly(TH2Poly& poly); //Give frame to TH2Poly
   void InitTH2Poly_flower(TH2Poly& poly); //Give flower frame to TH2Poly
   void Event_Display(int ev); // Event Display
+  void Event_Display_3D(int ev); // Event Display
   void root_logon();
   double* Set_X0(double X0_arr[]);
   

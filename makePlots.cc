@@ -14,10 +14,13 @@
 #include "TChain.h"
 #include "TH1.h"
 #include "TH2.h"
+#include "TH3.h"
 #include <utility>
 
 //Constructor
-makePlots::makePlots(){}
+makePlots::makePlots(){
+  TestRun = false;
+  Init();}
 makePlots::makePlots( TChain *c1,TChain *c2,TChain *c3,string filename ):T_Rechit(c1),T_DWC(c2),T_Meta(c3)
 {
   cout << "Data: Constructor of makePlot ... \n\n" << endl;
@@ -53,7 +56,8 @@ makePlots::makePlots( TChain *c1,TChain *c2,TChain *c3,string filename ):T_Rechi
   rechit_timeMaxLG = 0;
   rechit_toaRise = 0;
   rechit_toaFall = 0;
-  
+  TestRun = false;
+  Init();  
 }
 makePlots::makePlots( TChain *c1,TChain *c2,string filename ):T_Rechit(c1),T_DWC(c2){
   cout << "MC: Constructor of makePlot ... \n\n" << endl;
@@ -89,7 +93,8 @@ makePlots::makePlots( TChain *c1,TChain *c2,string filename ):T_Rechit(c1),T_DWC
   rechit_timeMaxLG = 0;
   rechit_toaRise = 0;
   rechit_toaFall = 0;
-
+  TestRun = false;
+  Init();
 }
 makePlots::makePlots( TChain *c1,string filename ):T_Rechit(c1){
   cout << "Test Data: Constructor of makePlot ... \n\n" << endl;
@@ -126,6 +131,7 @@ makePlots::makePlots( TChain *c1,string filename ):T_Rechit(c1){
   rechit_toaRise = 0;
   rechit_toaFall = 0;
   TestRun = true;
+  Init();
 }
 
 //Destructor
@@ -232,7 +238,31 @@ void makePlots::Init_Runinfo(){
     runN = run;
   else
     runN = 0;
-  cout << beam_str.c_str()  << " , "<< beamE << "GeV\n" << endl;
+  
+  if(runN <= 722 ) {
+    setup_config = 0;
+    NLAYER_EE = 28;
+    NLAYER_FH = 12;
+    if(runN <= 257){
+      cout << "TOA threshold will be changed after Run 257." << endl;}
+  }
+  else if(runN > 722 && runN <= 1057){
+    setup_config = 1;
+    NLAYER_EE = 28;
+    NLAYER_FH = 11;}
+  else if(runN > 1057 && runN <= 1078){
+    setup_config = 2;
+    NLAYER_EE = 0;
+    NLAYER_FH = 9;}
+  else{
+    setup_config = 3;
+    NLAYER_EE = 8;
+    NLAYER_FH = 12;
+  }
+  
+  NLAYER = NLAYER_EE+NLAYER_FH;
+  cout << "Beam type = "<< beam_str.c_str()  << " , Energy = "<< beamE
+       << "GeV" << ", setup_config = "  << setup_config << endl;
 }
 
 void makePlots::GetData(int evt){
@@ -261,6 +291,9 @@ void makePlots::Getinfo(int ihit,int &layer,double &x, double &y,double &z,doubl
 void makePlots::NtupleMaker(){
   
   Init();
+  //  for(int i = 0 ; i < 10 ; ++i){
+  //  Event_Display_3D(i);}
+  
   char title[50];
   if(Is_Data)
     sprintf(title,"output_root/Run%i_%iGeV_%s.root",runN,beamE,beam_str.c_str());
@@ -301,11 +334,12 @@ void makePlots::NtupleMaker(){
   outT3->Branch("totalE_CEE",&totalE_CEE,"totalE_CEE/D");
   outT3->Branch("totalE_CEH",&totalE_CEH,"totalE_CEH/D");
 
-  outT3->Branch("layerE",layerE,"layerE[40]/D");
-  outT3->Branch("layerE1",E_1,"layerE1[40]/D");
-  outT3->Branch("layerE7",E_7,"layerE7[40]/D");
-  outT3->Branch("layerE19",E_19,"layerE19[40]/D");
-  outT3->Branch("layerE37",E_37,"layerE37[40]/D");
+  outT3->Branch("NLAYER",&NLAYER,"NLAYER/I");
+  outT3->Branch("layerE",layerE,"layerE[NLAYER]/D");
+  outT3->Branch("layerE1",E_1,"layerE1[NLAYER]/D");
+  outT3->Branch("layerE7",E_7,"layerE7[NLAYER]/D");
+  outT3->Branch("layerE19",E_19,"layerE19[NLAYER]/D");
+  outT3->Branch("layerE37",E_37,"layerE37[NLAYER]/D");
 
   
   
@@ -336,7 +370,7 @@ void makePlots::NtupleMaker(){
       Getinfo(h,layer,posx,posy,posz,energy);
       //Be careful here layerID start from 1
       totalE += energy;
-      if(layer <= 28)
+      if(layer <= NLAYER_EE)
 	totalE_CEE += energy;      
       else
 	totalE_CEH += energy;
@@ -385,10 +419,16 @@ void makePlots::Energy_Distribution_Display(bool ignore_EE,bool hitmap){
   gROOT->SetBatch(kTRUE);
 
   TCanvas *c1 = new TCanvas("c1","c1",6400,3600);
-  if(!ignore_EE)
-    c1->Divide(8,5);
-  else
-    c1->Divide(4,3);
+  if(ignore_EE){
+    c1->Divide(4,3);}
+  else{
+    if(setup_config < 2){
+      c1->Divide(8,5);}
+    else if(setup_config == 2){
+      c1->Divide(4,3);}
+    else{
+      c1->Divide(5,4);}}
+  
   char title[50];
 
 
@@ -397,11 +437,27 @@ void makePlots::Energy_Distribution_Display(bool ignore_EE,bool hitmap){
   for(int iL = 0; iL < NLAYER ; ++iL){
     evtdis[iL] = new TH2Poly();
     if(setup_config == 0){
-      if(iL < 28)
-	InitTH2Poly(*evtdis[iL]);
-      else
-	InitTH2Poly_flower(*evtdis[iL]);
+      if(iL < NLAYER_EE){
+	InitTH2Poly(*evtdis[iL]);}
+      else{
+	InitTH2Poly_flower(*evtdis[iL]);}
     }
+    else if(setup_config == 1){
+      if(iL < NLAYER_EE + 2){ // +2 For 2 single layer FH
+	InitTH2Poly(*evtdis[iL]);}
+      else{
+	InitTH2Poly_flower(*evtdis[iL]);}
+    }
+    else if(setup_config == 2){
+      InitTH2Poly_flower(*evtdis[iL]);}
+    else if(setup_config == 3){
+      if(iL < NLAYER_EE){
+	InitTH2Poly(*evtdis[iL]);}
+    }
+    else{
+      InitTH2Poly_flower(*evtdis[iL]);
+    }
+  
     sprintf(title,"Layer_%i",iL+1);
     evtdis[iL]->SetTitle(title);
   }
@@ -440,7 +496,7 @@ void makePlots::Energy_Distribution_Display(bool ignore_EE,bool hitmap){
       c1->cd(iL+1);
       evtdis[iL]->Draw("colz");}
     else{
-      int tmpL = iL+1 - 28 ;
+      int tmpL = iL+1 - NLAYER_EE ;
       if(tmpL > 0){
 	c1->cd(tmpL);
 	evtdis[iL]->Draw("colz");}
@@ -456,7 +512,12 @@ void makePlots::Energy_Distribution_Display(bool ignore_EE,bool hitmap){
 void makePlots::Event_Display(int ev){
 
   TCanvas *c1 = new TCanvas("c1","c1",6400,3600);
-  c1->Divide(8,5);
+  if(setup_config < 2){
+    c1->Divide(8,5);}
+  else if(setup_config == 2){
+    c1->Divide(4,3);}
+  else{
+    c1->Divide(5,4);}
   char title[50];
 
 
@@ -465,11 +526,27 @@ void makePlots::Event_Display(int ev){
   for(int iL = 0; iL < NLAYER ; ++iL){
     evtdis[iL] = new TH2Poly();
     if(setup_config == 0){
-      if(iL < 28)
-	InitTH2Poly(*evtdis[iL]);
-      else
-	InitTH2Poly_flower(*evtdis[iL]);
+      if(iL < NLAYER_EE){
+	InitTH2Poly(*evtdis[iL]);}
+      else{
+	InitTH2Poly_flower(*evtdis[iL]);}
     }
+    else if(setup_config == 1){
+      if(iL < NLAYER_EE + 2){ // +2 For 2 single layer FH
+	InitTH2Poly(*evtdis[iL]);}
+      else{
+	InitTH2Poly_flower(*evtdis[iL]);}
+    }
+    else if(setup_config == 2){
+      InitTH2Poly_flower(*evtdis[iL]);}
+    else if(setup_config == 3){
+      if(iL < NLAYER_EE){
+	InitTH2Poly(*evtdis[iL]);}
+    }
+    else{
+      InitTH2Poly_flower(*evtdis[iL]);
+    }
+    
     sprintf(title,"Layer_%i",iL+1);
     evtdis[iL]->SetTitle(title);
   }
@@ -507,6 +584,45 @@ void makePlots::Event_Display(int ev){
   delete c1;
 
 }
+
+void makePlots::Event_Display_3D(int ev){
+  gStyle->SetPalette(53);
+
+  TCanvas *c1 = new TCanvas("c1","c1",6400,3600);
+  char title[50];
+
+  TH3D *evtdis = new TH3D("","",60,-10,50,50,-20,20,50,-20,20);
+
+  GetData(ev);
+  int Nhits;
+  Nhits = NRechits;
+  //cout << Nhits << endl;
+  int layer;
+  double posx,posy,posz,energy;
+
+  
+  double totalE = 0;
+  for(int h = 0; h < Nhits ; ++h){
+    Getinfo(h,layer,posx,posy,posz,energy);
+      totalE += energy;
+  }
+
+  for(int h = 0; h < Nhits ; ++h){
+    Getinfo(h,layer,posx,posy,posz,energy);
+    //cout << "layer = " << layer << " , x = " << posx << ", y = " << posy << ", nmip = " << energy/ENEPERMIP <<endl;
+    evtdis->Fill(layer-1,posy,posx,energy/totalE);
+    //cout << "hello~" << endl;
+  }
+  evtdis->Draw("BOX2");
+  c1->Update();
+  //sprintf(title,"plots/evt_dis/event_display_%ievt.png",ev);
+  //c1->SaveAs(title);
+  c1->WaitPrimitive();
+  
+  delete c1;
+
+}
+
 
 void makePlots::InitTH2Poly(TH2Poly& poly)
 {
@@ -641,19 +757,42 @@ double* makePlots::Set_X0(double X0_arr[]){
   26 0.976  27 0.909  28 0.976
   */
   double single_layer_X0[NLAYER];
-  for( int i = 0 ; i < NLAYER ; ++i){
-    if ( i % 2 == 0) single_layer_X0[i] = 0.909;
-    else single_layer_X0[i] = 0.976;
+  //Temporarily assign 4.5X0 to all the absorber layer in FH
+  if(setup_config < 2){
+    for( int i = 0 ; i < NLAYER_EE ; ++i){
+      if ( i % 2 == 0) single_layer_X0[i] = 0.909;
+      else single_layer_X0[i] = 0.976;
+    }
+    single_layer_X0[0]  = 0.933;
+    single_layer_X0[15] = 1.143;
+    single_layer_X0[19] = 1.43;
+    if(setup_config == 0){
+      for(int i = NLAYER_EE ; i < NLAYER ; ++i){
+	single_layer_X0[i]  = 4.5;}
+    }
+    else{
+      single_layer_X0[NLAYER_EE]    = 0;
+      single_layer_X0[NLAYER_EE+1]  = 0;
+      for(int i = NLAYER_EE+2 ; i < NLAYER ; ++i){
+	single_layer_X0[i]  = 4.5;}
+    }
   }
-  single_layer_X0[0]  = 0.933;
-  single_layer_X0[15] = 1.143;
-  single_layer_X0[19] = 1.43;
-
-  //Temporarily assign 4.5X0 to the layer in FH
-  for(int i = 28 ; i < NLAYER ; ++i){
-    single_layer_X0[i]  = 4.5;    
+  else if(setup_config == 2){
+    cout << "This is muon run and I am not going to deal with the X0!" << endl;
+    cout << "input anything to continue..." << endl;
+    getchar();}
+  else{
+    single_layer_X0[0] = 1.82;
+    single_layer_X0[1] = 1.96;
+    single_layer_X0[2] = 1.96;
+    single_layer_X0[3] = 2.26;
+    single_layer_X0[4] = 2.26;
+    single_layer_X0[5] = 2.26;
+    single_layer_X0[6] = 4.48;
+    single_layer_X0[7] = 5.59;
+    for(int i = NLAYER_EE ; i < NLAYER ; ++i){
+      single_layer_X0[i]  = 4.5;}
   }
-  
   double X0_sum = 0.;
   for(int iL = 0 ; iL < NLAYER ; ++iL){
     X0_sum += single_layer_X0[iL];

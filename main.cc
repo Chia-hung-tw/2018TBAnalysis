@@ -70,8 +70,8 @@ int main(int argc, char** argv){
   M = new makePlots(chain,filename);
   M->Is_Data = Is_Data ;
 
-  M->Energy_Distribution_Display(1,0);
-  //M->NtupleMaker();
+  //M->Energy_Distribution_Display(1,0);
+  M->NtupleMaker();
   
   /*
   if(Is_Data){
