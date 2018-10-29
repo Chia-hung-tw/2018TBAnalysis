@@ -1,14 +1,16 @@
-This code read the 2018 June TB rechit ntuple to produce Shower Shape variable
+This code read the 2018 October TB rechit ntuple to produce Shower Shape variable
 
 input data file path:
-/eos/cms/store/group/dpg_hgcal/tb_hgcal/2018/cern_h2_june/offline_analysis/ntuples/v9/
+/eos/cms/store/group/dpg_hgcal/tb_hgcal/2018//eos/cms/store/group/dpg_hgcal/tb_hgcal/2018/cern_h2_october/prompt_reco
 input MC file path:
-/eos/cms/store/group/dpg_hgcal/tb_hgcal/2018/cern_h2_june/offline_analysis/sim_ntuples/v9
+Not ready yet
 
 For the run information please refer to:
-https://docs.google.com/spreadsheets/d/1FlwthMixJHmHVBguYSbw5mIeBo2tF7rFJPTYLTNI9Vs/edit#gid=0
-Or
-run_list
+https://docs.google.com/spreadsheets/d/1FlwthMixJHmHVBguYSbw5mIeBo2tF7rFJPTYLTNI9Vs/edit?usp=sharing
+
+*************************************************************************
+Downwards are outdated(currently just type ./makePlots to run the code)**
+*************************************************************************
 
 To Run:
 (Data -> For example run 316)
