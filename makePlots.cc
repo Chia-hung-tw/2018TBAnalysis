@@ -382,7 +382,8 @@ double* makePlots::Set_X0(double X0_arr[]){
   }
   single_layer_X0[0]  = 0.933;
   single_layer_X0[15] = 1.143;
-  single_layer_X0[19] = 1.43;
+  single_layer_X0[19] = 1.143;
+  single_layer_X0[23] = 1.06;
 
   double X0_sum = 0.;
   for(int iL = 0 ; iL < 28 ; ++iL){
